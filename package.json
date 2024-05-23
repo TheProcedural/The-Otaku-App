@@ -1,0 +1,69 @@
+{
+  "name": "the-otaku-app.theprocedural.com",
+  "version": "0.0.1",
+  "productName": "The Otaku App",
+  "description": "Track, stay updated and check chronology of Anime and Manga.",
+  "authors": [
+    {
+      "name": "Erik Bjerke",
+      "email": "erik@theprocedural.com",
+      "url": "https://theprocedural.com"
+    },
+    {
+      "name": "Yaiza Wadhwani",
+      "email": "yaiza@theprocedural.com",
+      "url": "https://theprocedural.com"
+    }
+  ],
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "echo \"No test specified\" && exit 0",
+    "#": "Development scripts",
+    "dev:spa": "quasar dev",
+    "dev:pwa": "quasar dev -m pwa",
+    "dev:ios": "quasar dev -m capacitor -T ios -o",
+    "dev:android": "quasar dev -m capacitor -T android -o",
+    "dev:electron": "quasar dev -m electron",
+    "##": "Build scripts",
+    "build:spa": "quasar build",
+    "build:pwa": "quasar build -m pwa",
+    "build:ios": "quasar build -m capacitor -T ios -o",
+    "build:android": "quasar build -m capacitor -T android -o",
+    "build:electron": "quasar build -m electron",
+    "####": "Run scripts",
+    "start:spa": "node server.js"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-pro": "^6.5.2",
+    "@quasar/extras": "^1.16.4",
+    "@vueuse/core": "^10.9.0",
+    "axios": "^1.2.1",
+    "pinia": "^2.0.11",
+    "quasar": "^2.6.0",
+    "register-service-worker": "^1.7.2",
+    "vue": "^3.4.18",
+    "vue-i18n": "^9.0.0",
+    "vue-router": "^4.0.0"
+  },
+  "devDependencies": {
+    "@intlify/unplugin-vue-i18n": "^2.0.0",
+    "@quasar/app-vite": "^2.0.0-beta.5",
+    "autoprefixer": "^10.4.19",
+    "electron": "^30.0.6",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "workbox-build": "^7.1.0",
+    "workbox-cacheable-response": "^7.1.0",
+    "workbox-core": "^7.1.0",
+    "workbox-expiration": "^7.1.0",
+    "workbox-precaching": "^7.1.0",
+    "workbox-routing": "^7.1.0",
+    "workbox-strategies": "^7.1.0"
+  },
+  "engines": {
+    "node": "^24 || ^22 || ^20 || ^18",
+    "npm": ">= 6.13.4",
+    "yarn": ">= 1.21.1"
+  }
+}
