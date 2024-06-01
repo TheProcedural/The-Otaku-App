@@ -1,8 +1,7 @@
 <template>
   <q-page
     :class="`tw-flex tw-justify-center ${
-      (App.search.fetchingMangas || App.search.fetchingAnimes) &&
-      'tw-items-center'
+      (Api.fetching.manga || Api.fetching.anime) && 'tw-items-center'
     }`"
   >
     <!-- reverse order here based on App.search.mangasFirst (boolean) -->
@@ -21,8 +20,8 @@
           App.search.filters.searchAnimes &&
           App.search.filters.searchMangas &&
           App.search.value.trim() !== '' &&
-          !App.search.fetchingAnimes &&
-          !App.search.fetchingMangas
+          !Api.fetching.anime &&
+          !Api.fetching.manga
         "
         vertical
         class="tw-hidden md:tw-flex"
@@ -42,18 +41,18 @@
     >
       <h1 class="tw-text-2xl tw-text-center tw-text-slate-800 tw-font-bold">
         {{
-          !App.search.fetchingAnimes &&
-          !App.search.fetchingMangas &&
+          !Api.fetching.anime &&
+          !Api.fetching.manga &&
           $t("discover.no_results")
         }}
-        {{ !App.search.fetchingMangas && $t("discover.no_manga_results") }}
-        {{ !App.search.fetchingAnimes && $t("discover.no_anime_results") }}
+        {{ !Api.fetching.manga && $t("discover.no_manga_results") }}
+        {{ !Api.fetching.anime && $t("discover.no_anime_results") }}
       </h1>
     </div> -->
 
     <!-- Fetching results -->
     <span
-      v-if="App.search.fetchingAnimes || App.search.fetchingMangas"
+      v-if="Api.fetching.anime || Api.fetching.manga"
       class="tw-w-full tw-h-full tw-absolute tw-top-0 tw-bottom-0 tw-left-0 tw-right-0 tw-flex tw-justify-center tw-items-center"
     >
       <q-circular-progress indeterminate rounded size="xl" class="q-ma-md" />
@@ -82,7 +81,7 @@
 
 <script setup>
 import { useQuasar } from "quasar";
-import { useApp } from "stores/app";
+import { useApp, useApi } from "stores/stores";
 import searchImage from "assets/search.webp";
 
 import Mangas from "../components/Mangas.vue";
@@ -94,4 +93,5 @@ defineOptions({
 
 const $q = useQuasar();
 const App = useApp();
+const Api = useApi();
 </script>

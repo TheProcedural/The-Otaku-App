@@ -3,14 +3,14 @@
     v-if="App.search.filters.searchAnimes"
     :class="`
           ${App.search.filters.searchMangas ? 'md:tw-w-1/2' : 'tw-w-full'}
-          ${App.search.fetchingAnimes && '!tw-flex !tw-justify-center'}
+          ${Api.fetching.anime && '!tw-flex !tw-justify-center'}
           `"
   >
     <!-- Results -->
     <template
       v-if="
-        !App.search.fetchingAnimes &&
-        App.search.animeResults.length &&
+        !Api.fetching.anime &&
+        App.search.results.anime.slice(0, App.search.limit).length &&
         App.search.value.trim() !== ''
       "
     >
@@ -22,7 +22,7 @@
       </q-item-label>
 
       <q-item
-        v-for="result in App.search.animeResults"
+        v-for="result in App.search.results.anime.slice(0, App.search.limit)"
         :key="result?.mal_id"
         :to="'anime/' + result?.mal_id"
         clickable
@@ -81,7 +81,7 @@
 
     <!-- No results -->
     <div
-      v-else-if="!App.search.fetchingAnimes && App.search.value.trim() !== ''"
+      v-else-if="!Api.fetching.anime && App.search.value.trim() !== ''"
       class="tw-h-full tw-flex tw-items-center tw-justify-center tw-my-10"
     >
       <h1 class="tw-text-2xl tw-text-center tw-text-slate-800 tw-font-bold">
@@ -93,67 +93,27 @@
 
 <script setup>
 import { onBeforeUnmount, watch } from "vue";
-import { useQuasar } from "quasar";
-import { useApp } from "stores/app";
+import { useApp, useApi } from "stores/stores";
+import { search } from "../utils/idb";
 
 defineOptions({
   name: "Animes",
 });
 
-const $q = useQuasar();
 const App = useApp();
+const Api = useApi();
 
 const fetchAnimes = async () => {
-  App.search.fetchingAnimes = true;
-
   if (App.search.value.trim() === "") {
-    App.search.animeResults = [];
-    App.search.fetchingAnimes = false;
+    App.search.results.anime = [];
     return;
   }
 
-  try {
-    const response = await fetch(
-      `https://api.jikan.moe/v4/anime?page=1&limit=10&q=${App.search.value}`
-    );
-    if (response.ok) {
-      const data = await response.json();
+  await Api.search("anime", { q: App.search.value, page: 1, limit: 10 });
 
-      // if "mal_id" is repeated delete one
-      const uniqueData = [];
-      const seen = new Map();
+  App.search.results.anime = await search("anime", App.search.value);
 
-      for (const item of data.data) {
-        if (!seen.has(item.mal_id)) {
-          seen.set(item.mal_id, true);
-          uniqueData.push(item);
-        }
-      }
-
-      App.search.animeResults = uniqueData;
-
-      // Sort by timestamp
-      App.search.animeResults.sort((a, b) => {
-        // If true, sort descending
-        if (App.search.order)
-          return new Date(b.aired.from) - new Date(a.aired.from);
-
-        return new Date(a.aired.from) - new Date(b.aired.from);
-      });
-    } else {
-      $q.notify({
-        type: "negative",
-        message: "Failed to fetch animes",
-      });
-    }
-  } catch (error) {
-    $q.notify({
-      type: "negative",
-      message: "An error occurred while fetching animes",
-    });
-  }
-
-  App.search.fetchingAnimes = false;
+  App.sort("anime");
 };
 
 const stopWatchingSearch = watch(
@@ -162,12 +122,12 @@ const stopWatchingSearch = watch(
     if (App.search.value.trim() !== "") {
       if (App.search.filters.searchAnimes) fetchAnimes();
     } else {
-      App.search.animeResults = [];
+      App.search.results.anime = [];
     }
   }
 );
 
-const stopWatchingSearchAnimes = watch(
+const stopWatchingSearchAnimesFilter = watch(
   () => App.search.filters.searchAnimes,
   () => {
     if (App.search.filters.searchAnimes && App.search.value.trim() !== "")
@@ -178,21 +138,14 @@ const stopWatchingSearchAnimes = watch(
 const stopWatchingOrder = watch(
   () => App.search.order,
   () => {
-    // Sort by timestamp
-    App.search.animeResults.sort((a, b) => {
-      // If true, sort descending
-      if (App.search.order)
-        return new Date(b.aired.from) - new Date(a.aired.from);
-
-      return new Date(a.aired.from) - new Date(b.aired.from);
-    });
+    App.sort("anime");
   },
   { immediate: true }
 );
 
 onBeforeUnmount(() => {
   stopWatchingSearch();
-  stopWatchingSearchAnimes();
+  stopWatchingSearchAnimesFilter();
   stopWatchingOrder();
 });
 </script>

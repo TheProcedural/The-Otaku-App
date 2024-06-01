@@ -247,13 +247,12 @@ const { t } = useI18n();
 const App = useApp();
 
 const tab = ref("info");
-const visited = ref([]);
 const fetchingData = ref(false);
 const creatingTimelines = ref(false);
 
 const fetchData = async (refresh) => {
   try {
-    if (!refresh) {
+    if (!refresh && idb.value.animes[$route.params.id]) {
       fetchingData.value = false;
       return;
     }
@@ -314,28 +313,25 @@ const createTimelines = async (relations) => {
     const timelineData = [];
     for (const relation of relations) {
       for (const entry of relation.entry) {
-        if (!visited.value.includes(entry.mal_id)) {
-          await delay(500);
-          const data = await fetchAnimeAndMangaData(
-            entry.mal_id,
-            entry.type,
-            false
-          );
+        // await App.delay(500);
+        const data = await fetchAnimeAndMangaData(
+          entry.mal_id,
+          entry.type,
+          false
+        );
 
-          // Add from date
-          const dateField = entry.type === "anime" ? "aired" : "published";
-          if (data[dateField]?.from) {
-            entry.from = data[dateField].from;
-          }
-
-          // Add title, title_english, title_japanese
-          entry.name = data.title;
-          entry.title_english = data.title_english;
-          entry.title_japanese = data.title_japanese;
-
-          timelineData.push(relation);
-          visited.value.push(entry.mal_id);
+        // Add from date
+        const dateField = entry.type === "anime" ? "aired" : "published";
+        if (data[dateField]?.from) {
+          entry.from = data[dateField].from;
         }
+
+        // Add title, title_english, title_japanese
+        entry.name = data.title;
+        entry.title_english = data.title_english;
+        entry.title_japanese = data.title_japanese;
+
+        timelineData.push(relation);
       }
     }
     return timelineData;
@@ -344,8 +340,6 @@ const createTimelines = async (relations) => {
   }
   creatingTimelines.value = false;
 };
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const prepareEpisodes = (episodes, existingEpisodes) => {
   const existingEpisodesMap = Object.fromEntries(
@@ -412,12 +406,13 @@ const stopWatchingOrder = watch(
 const stopWatchingParams = watch(
   () => $route.params.id,
   () => {
+    tab.value = "info";
     fetchData(true);
   }
 );
 
 onMounted(() => {
-  fetchData(false);
+  fetchData(true);
 });
 
 onBeforeUnmount(() => {

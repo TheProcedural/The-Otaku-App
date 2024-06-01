@@ -7,40 +7,43 @@ export const useApp = defineStore("counter", {
     drawer: false,
     // i18n
     locale: {
-      appLanguage: useStorage("language", "en-GB"),
-      appLocaleOptions: useStorage("localeOptions", [
+      appLocaleOptions: [
         { value: "en-GB", label: "🇬🇧 English" },
         { value: "es-ES", label: "🇪🇸 Español" },
         { value: "fr-FR", label: "🇫🇷 Français" },
         { value: "it-IT", label: "🇮🇹 Italiano" },
         { value: "ro-RO", label: "🇷🇴 Română" },
-      ]),
-      itemsLanguage: useStorage("itemsLanguage", "english"),
-      itemsLocaleOptions: useStorage("itemsLocaleOptions", [
+      ],
+      itemsLocaleOptions: [
         { value: "english", label: "🇬🇧 English" },
         { value: "romaji", label: "🇯🇵 Romaji" },
         { value: "japanese", label: "🇯🇵 日本語" },
-      ]),
+      ],
+      appLanguage: useStorage("language", "en-GB"),
+      itemsLanguage: useStorage("itemsLanguage", "english"),
     },
     // Search & filters
     search: useStorage("search", {
       value: "",
-      animeResults: [],
-      fetchingMangas: false,
-      mangaResults: [],
-      fetchingAnimes: false,
+      limit: 10,
       order: true,
       mangasFirst: false,
+      results: {
+        anime: [],
+        manga: [],
+      },
       filters: {
+        showUnrated: true,
         searchMangas: true,
         searchAnimes: true,
       },
     }),
   }),
 
-  getters: {},
-
   actions: {
+    delay(ms) {
+      new Promise((resolve) => setTimeout(resolve, ms));
+    },
     getTitle(english, romaji, japanese) {
       let title = "Title not found";
 
@@ -52,7 +55,6 @@ export const useApp = defineStore("counter", {
         return japanese;
       }
 
-      // Fallback options if the preferred language is not available
       if (english) {
         return english;
       } else if (romaji) {
@@ -62,6 +64,15 @@ export const useApp = defineStore("counter", {
       }
 
       return title;
+    },
+    sort(type) {
+      const sortBy = type === "anime" ? "aired" : "published";
+      this.search.results[type].sort((a, b) => {
+        if (this.search.order)
+          return new Date(b[sortBy].from) - new Date(a[sortBy].from);
+
+        return new Date(a[sortBy].from) - new Date(b[sortBy].from);
+      });
     },
   },
 });

@@ -83,7 +83,7 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, watch, ref } from "vue";
+import { ref } from "vue";
 import { useQuasar } from "quasar";
 import { useApp } from "stores/app";
 import { useRouter } from "vue-router";

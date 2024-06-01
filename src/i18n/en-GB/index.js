@@ -20,6 +20,10 @@ export default {
     mangas_first: "Mangas first",
     animes_first: "Animes first",
     mangas_first_description: "What to show first on the search results.",
+    show_unrated: "Show unrated",
+    show_unrated_description: "Show or hide unrated titles.",
+    limit: "Limit",
+    limit_description: "Max number of results to show.",
   },
   discover: {
     anime: "Anime",

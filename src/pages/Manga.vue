@@ -171,18 +171,20 @@ const { t } = useI18n();
 const App = useApp();
 
 const tab = ref("info");
-const visited = ref([]);
+
 const fetchingData = ref(false);
 const creatingTimelines = ref(false);
 
 const fetchData = async (refresh) => {
   try {
-    if (!refresh) {
+    if (!refresh && idb.value.mangas[$route.params.id]) {
       fetchingData.value = false;
       return;
     }
     fetchingData.value = true;
+
     const mangaData = await fetchMangaData($route.params.id, "manga", true);
+
     console.log("before: ", mangaData.relations);
     mangaData.relations = await createTimelines(mangaData.relations);
     console.log("after: ", mangaData.relations);
@@ -212,26 +214,24 @@ const createTimelines = async (relations) => {
     const timelineData = [];
     for (const relation of relations) {
       for (const entry of relation.entry) {
-        if (!visited.value.includes(entry.mal_id)) {
-          await delay(500);
-          const data = await fetchMangaData(entry.mal_id, entry.type, false);
+        await delay(500);
+        const data = await fetchMangaData(entry.mal_id, entry.type, false);
 
-          // Add from date
-          const dateField = entry.type === "manga" ? "published" : "aired";
-          if (data[dateField]?.from) {
-            entry.from = data[dateField].from;
-          }
-
-          // Add title, title_english, title_japanese
-          entry.name = data.title;
-          entry.title_english = data.title_english;
-          entry.title_japanese = data.title_japanese;
-
-          timelineData.push(relation);
-          visited.value.push(entry.mal_id);
+        // Add from date
+        const dateField = entry.type === "manga" ? "published" : "aired";
+        if (data[dateField]?.from) {
+          entry.from = data[dateField].from;
         }
+
+        // Add title, title_english, title_japanese
+        entry.name = data.title;
+        entry.title_english = data.title_english;
+        entry.title_japanese = data.title_japanese;
+
+        timelineData.push(relation);
       }
     }
+
     return timelineData;
   } catch (error) {
     console.error("Error creating timelines:", error);
@@ -281,12 +281,13 @@ const stopWatchingOrder = watch(
 const stopWatchingParams = watch(
   () => $route.params.id,
   () => {
+    tab.value = "info";
     fetchData(true);
   }
 );
 
 onMounted(() => {
-  fetchData(false);
+  fetchData(true);
 });
 
 onBeforeUnmount(() => {

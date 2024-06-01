@@ -130,6 +130,41 @@
         />
       </q-item-section>
     </q-item>
+
+    <q-item tag="label" v-ripple>
+      <q-item-section>
+        <q-item-label>{{ $t("sidebar.show_unrated") }}</q-item-label>
+        <q-item-label caption>
+          {{ $t("sidebar.show_unrated_description") }}</q-item-label
+        >
+      </q-item-section>
+      <q-item-section side>
+        <q-checkbox v-model="App.search.filters.showUnrated" />
+      </q-item-section>
+    </q-item>
+
+    <!-- limit per page -->
+    <q-item tag="label" v-ripple>
+      <q-item-section>
+        <q-item-label>{{ $t("sidebar.limit") }}</q-item-label>
+        <q-item-label caption>
+          {{ $t("sidebar.limit_description") }}</q-item-label
+        >
+      </q-item-section>
+      <q-item-section side>
+        <q-input
+          v-model="App.search.limit"
+          type="number"
+          :min="1"
+          :max="10"
+          dense
+          rounded
+          standout
+          hide-bottom-space
+          class="tw-w-16"
+        />
+      </q-item-section>
+    </q-item>
   </q-list>
 </template>
 
