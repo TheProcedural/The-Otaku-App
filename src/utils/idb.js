@@ -86,6 +86,12 @@ export async function addItems(type, data) {
   data.forEach((newItem) => {
     if (itemMap.has(newItem.mal_id)) {
       const existingItem = itemMap.get(newItem.mal_id);
+
+      // Preserve the existing episodes if they are an array
+      if (Array.isArray(existingItem.episodes)) {
+        newItem.episodes = existingItem.episodes;
+      }
+
       Object.assign(existingItem, newItem);
     } else {
       db.value[type].push(newItem);
@@ -104,10 +110,8 @@ export async function search(type, query) {
 }
 
 export function getById(type, id) {
-  // wait for the data to be loaded
-  if (!isFinished.value) return null;
-
   return db.value[type].find((item) => item.mal_id === parseInt(id));
 }
 
-export default isFinished;
+// Export isFinished
+export { isFinished };

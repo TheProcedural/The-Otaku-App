@@ -133,7 +133,7 @@ export default configure((ctx) => {
 
     // animations: 'all', // --- includes all animations
     // https://v2.quasar.dev/options/animations
-    animations: ["pulse", "slideInRight", "slideInLeft"],
+    animations: ["pulse", "slideInRight", "slideInLeft", "zoomIn", "zoomOut"],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#property-sourcefiles
     // sourceFiles: {

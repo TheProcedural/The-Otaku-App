@@ -3,24 +3,16 @@
     <q-pull-to-refresh @refresh="refresh">
       <q-tabs
         class="tw-shadow-md tw-mt-auto tw-bg-slate-600 tw-text-white tw-sticky tw-top-[50px] tw-z-10"
-        elevated
-        dense
         v-model="tab"
         align="justify"
       >
+        <q-tab no-caps name="info" :label="$t('manga.details_tab')" />
         <q-tab
           no-caps
-          icon="fa-light fa-tachograph-digital"
-          name="info"
-          :label="$t('manga.details_tab')"
-        />
-        <q-tab
-          no-caps
-          icon="fa-light fa-timeline-arrow"
           color="primary"
           active-color="primary"
           name="timeline"
-          :label="$t('manga.timeline_tab')"
+          :label="$t('manga.relations_tab')"
         />
       </q-tabs>
 

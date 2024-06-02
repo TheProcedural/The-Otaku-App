@@ -36,8 +36,9 @@ export default {
   anime: {
     details_tab: "Details",
     episodes_tab: "Episodes",
-    timeline_tab: "Timeline",
-    trailer_tab: "Trailer",
+    relations_tab: "Relations",
+    calendar_tab: "Calendar",
+    select_all: "Select all",
     unrated: "Unrated",
     number_of_episodes: "Number of Episodes: ",
     type: "Type: ",
@@ -52,7 +53,7 @@ export default {
   },
   manga: {
     details_tab: "Details",
-    timeline_tab: "Timeline",
+    relations_tab: "Relations",
     unrated: "Unrated",
   },
 };

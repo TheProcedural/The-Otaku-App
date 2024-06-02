@@ -26,6 +26,9 @@ export const useApi = defineStore("api", {
     },
   }),
   actions: {
+    delay(ms) {
+      new Promise((resolve) => setTimeout(resolve, ms));
+    },
     async search(type, query) {
       this.fetching[type] = true;
       this.error[type] = null;
@@ -81,20 +84,39 @@ export const useApi = defineStore("api", {
     async fetchEpisodesById(id) {
       this.fetching.episodes = true;
       this.error.episodes = null;
-      try {
-        const response = await axios.get(
-          `${API_BASE_URL}/anime/${id}/episodes`
-        );
 
-        const result = addEpisodes(id, response.data.data);
-        // if 404 then fetchbyid and retry
-        if (result === 404) {
-          await new Promise((resolve) => setTimeout(resolve, 300));
-          await this.fetchById("anime", id, true);
-          await new Promise((resolve) => setTimeout(resolve, 400));
-          await this.fetchEpisodesById(id);
+      try {
+        let page = 1;
+        let hasNextPage = true;
+
+        let data = [];
+
+        while (hasNextPage) {
+          const response = await axios.get(
+            `${API_BASE_URL}/anime/${id}/episodes?page=${page}`
+          );
+
+          data = data.concat(response.data.data);
+
+          hasNextPage = response.data.pagination.has_next_page;
+          page++;
+
+          console.log(hasNextPage);
+          console.log(page);
+          this.delay(1000);
         }
-        console.log(result);
+
+        const result = addEpisodes(id, data);
+
+        // If 404 then fetchById and retry
+        if (result === 404) {
+          this.delay(300);
+          await this.fetchById("anime", id, true);
+
+          this.delay(400);
+          await this.fetchEpisodesById(id);
+          return;
+        }
       } catch (error) {
         this.error.episodes = error;
       } finally {

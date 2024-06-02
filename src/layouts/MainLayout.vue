@@ -122,7 +122,9 @@ const getSearchPlaceholder = () => {
 
 const goBack = () => {
   enterAnimation.value = "animated slideInLeft";
-  $router.back();
+  const currentPath = $router.currentRoute.value.path;
+
+  if (currentPath != "/") $router.push("/");
 
   setTimeout(() => {
     enterAnimation.value = "animated slideInRight";
