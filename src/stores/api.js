@@ -87,6 +87,13 @@ export const useApi = defineStore("api", {
         );
 
         const result = addEpisodes(id, response.data.data);
+        // if 404 then fetchbyid and retry
+        if (result === 404) {
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          await this.fetchById("anime", id, true);
+          await new Promise((resolve) => setTimeout(resolve, 400));
+          await this.fetchEpisodesById(id);
+        }
         console.log(result);
       } catch (error) {
         this.error.episodes = error;

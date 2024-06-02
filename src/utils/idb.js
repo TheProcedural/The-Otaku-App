@@ -17,9 +17,13 @@ const fuseOptions = {
   fieldNormWeight: 1,
 };
 
-const { data: db } = useIDBKeyval("otaku-app", {
+const { data: db, isFinished } = useIDBKeyval("otaku-app", {
   anime: [],
   manga: [],
+  library: {
+    anime: [],
+    manga: [],
+  },
 });
 
 export function addRelations(type, id, relations) {
@@ -36,8 +40,8 @@ export function addEpisodes(id, episodes) {
     episodes[i].watched = false;
   }
 
-  const item = db.value.anime.find((item) => item.mal_id === id);
-  if (!item) return `Anime with ID ${id} not found`;
+  const item = db.value.anime.find((item) => item.mal_id === parseInt(id));
+  if (!item) return 404;
 
   const existingEpisodesMap = new Map();
   if (Array.isArray(item.episodes)) {
@@ -100,5 +104,8 @@ export async function search(type, query) {
 }
 
 export function getById(type, id) {
+  // wait for the data to be loaded
+  if (!isFinished.value) return null;
+
   return db.value[type].find((item) => item.mal_id === parseInt(id));
 }

@@ -150,12 +150,7 @@
                   </q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-checkbox
-                    v-model="episode.watched"
-                    @update:model-value="
-                      updateWatchedStatus(episode.mal_id, episode.watched)
-                    "
-                  />
+                  <q-checkbox v-model="episode.watched" />
                 </q-item-section>
               </q-item>
             </q-list>
@@ -213,14 +208,7 @@
 </template>
 
 <script setup>
-import {
-  ref,
-  onMounted,
-  onBeforeMount,
-  onBeforeUnmount,
-  computed,
-  watch,
-} from "vue";
+import { ref, onBeforeMount, onBeforeUnmount, watch } from "vue";
 import { useRouter, useRoute, RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useApp, useApi } from "stores/stores";
@@ -240,7 +228,7 @@ const Api = useApi();
 const tab = ref("info");
 const fetchingData = ref(false);
 
-const anime = computed(() => getById("anime", $route.params.id));
+const anime = ref(null);
 
 const convertDate = (date) => {
   return date ? new Date(date).toLocaleDateString() : "";
@@ -253,9 +241,41 @@ const refresh = (done) => {
   }, 500);
 };
 
-onBeforeMount(() => {
-  if (!anime.value.relations) Api.fetchRelationsById("anime", $route.params.id);
+let retries = 0;
+const loadData = (id) => {
+  if (retries > 19) {
+    // TODO: write give up logic
+    return;
+  }
 
-  if (!anime.value.episodes) Api.fetchEpisodesById($route.params.id);
+  anime.value = getById("anime", id);
+
+  if (anime.value === null) {
+    setTimeout(() => {
+      loadData(id);
+      retries++;
+    }, 100);
+  }
+
+  if (!Array.isArray(anime.value?.relations))
+    Api.fetchRelationsById("anime", id);
+
+  if (!Array.isArray(anime.value?.episodes)) Api.fetchEpisodesById(id);
+};
+
+const stopWatchingRouteChange = watch(
+  () => $route.params.id,
+  () => {
+    tab.value = "info";
+    loadData($route.params.id);
+  }
+);
+
+onBeforeMount(() => {
+  loadData($route.params.id);
+});
+
+onBeforeUnmount(() => {
+  stopWatchingRouteChange();
 });
 </script>

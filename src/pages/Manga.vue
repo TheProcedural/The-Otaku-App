@@ -23,6 +23,7 @@
           :label="$t('manga.timeline_tab')"
         />
       </q-tabs>
+
       <q-tab-panels
         animated
         swipeable
@@ -34,9 +35,9 @@
           <h2 class="tw-text-lg tw-font-medium tw-text-left">
             {{
               App.getTitle(
-                idb.mangas[$route.params.id]?.title_english,
-                idb.mangas[$route.params.id]?.title,
-                idb.mangas[$route.params.id]?.title_japanese
+                manga?.title_english,
+                manga?.title,
+                manga?.title_japanese
               )
             }}
           </h2>
@@ -48,17 +49,11 @@
                 color="orange"
                 class="tw-text-white tw-mx-auto -tw-mb-4 tw-z-10"
               >
-                {{
-                  idb.mangas[$route.params.id]?.score
-                    ? idb.mangas[$route.params.id]?.score + "/10"
-                    : $t("manga.unrated")
-                }}
+                {{ manga?.score ? manga?.score + "/10" : $t("manga.unrated") }}
               </q-chip>
               <q-img
-                :src="
-                  idb.mangas[$route.params.id]?.images?.webp?.large_image_url
-                "
-                :alt="idb.mangas[$route.params.id]?.title_english"
+                :src="manga?.images?.webp?.large_image_url"
+                :alt="manga?.title_english"
                 loading="lazy"
                 class="md:tw-w-56 sm:tw-w-48 tw-w-32 tw-rounded-lg"
               />
@@ -67,52 +62,47 @@
             <div>
               <p class="tw-mt-2">
                 <strong>{{ $t("manga.number_of_volumes") }}</strong>
-                {{ idb.mangas[$route.params.id]?.volumes }}
+                {{ manga?.volumes }}
               </p>
               <p>
                 <strong>{{ $t("manga.status") }}</strong>
-                {{ idb.mangas[$route.params.id]?.status }}
+                {{ manga?.status }}
               </p>
               <p>
                 <strong>{{ $t("manga.type") }}</strong>
-                {{ idb.mangas[$route.params.id]?.type }}
+                {{ manga?.type }}
               </p>
               <p>
                 <strong>{{ $t("manga.source") }}</strong>
-                {{ idb.mangas[$route.params.id]?.source }}
+                {{ manga?.source }}
               </p>
               <p>
                 <strong>{{ $t("manga.published_from") }}</strong>
-                {{ convertDate(idb.mangas[$route.params.id]?.published?.from) }}
+                {{ convertDate(manga?.published?.from) }}
               </p>
               <p>
                 <strong>{{ $t("manga.published_to") }}</strong>
-                {{ convertDate(idb.mangas[$route.params.id]?.published?.to) }}
+                {{ convertDate(manga?.published?.to) }}
               </p>
               <p>
                 <strong>{{ $t("manga.rank") }}</strong>
-                {{ idb.mangas[$route.params.id]?.rank }}
+                {{ manga?.rank }}
               </p>
               <p>
                 <strong>{{ $t("manga.popularity") }}</strong>
-                {{ idb.mangas[$route.params.id]?.popularity }}
+                {{ manga?.popularity }}
               </p>
             </div>
           </div>
           <p class="tw-text-gray-600 tw-my-4 tw-text-justify tw-indent-8">
-            {{
-              idb.mangas[$route.params.id]?.synopsis?.replace(
-                "[Written by MAL Rewrite]",
-                ""
-              )
-            }}
+            {{ manga?.synopsis?.replace("[Written by MAL Rewrite]", "") }}
           </p>
         </q-tab-panel>
 
         <q-tab-panel name="timeline">
           <q-timeline>
             <q-timeline-entry
-              v-for="relation in idb.mangas[$route.params.id].relations"
+              v-for="relation in manga.relations"
               :key="relation.entry[0]?.mal_id"
               :subtitle="relation.relation"
             >
@@ -142,6 +132,7 @@
         </q-tab-panel>
       </q-tab-panels>
     </q-pull-to-refresh>
+
     <q-inner-loading :showing="fetchingData">
       <q-spinner-gears size="50px" color="primary" />
     </q-inner-loading>
@@ -149,108 +140,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, onBeforeMount, onBeforeUnmount, watch } from "vue";
 import { useRouter, useRoute, RouterLink } from "vue-router";
-import { useIDBKeyval } from "@vueuse/integrations/useIDBKeyval";
 import { useI18n } from "vue-i18n";
-import { useApp } from "stores/app";
-import axios from "axios";
+import { useApp, useApi } from "stores/stores";
+import { getById } from "../utils/idb";
 
 defineOptions({
   name: "MangaDetails",
 });
 
-const { data: idb, isFinished } = useIDBKeyval("idb", {
-  animes: [],
-  mangas: [],
-});
 const $router = useRouter();
 const $route = useRoute();
 
 const { t } = useI18n();
 const App = useApp();
+const Api = useApi();
 
 const tab = ref("info");
-
 const fetchingData = ref(false);
-const creatingTimelines = ref(false);
 
-const fetchData = async (refresh) => {
-  try {
-    if (!refresh && idb.value.mangas[$route.params.id]) {
-      fetchingData.value = false;
-      return;
-    }
-    fetchingData.value = true;
-
-    const mangaData = await fetchMangaData($route.params.id, "manga", true);
-
-    console.log("before: ", mangaData.relations);
-    mangaData.relations = await createTimelines(mangaData.relations);
-    console.log("after: ", mangaData.relations);
-    idb.value.mangas[$route.params.id] = JSON.parse(JSON.stringify(mangaData)); // Ensure no Proxy object is stored
-  } catch (error) {
-    fetchingData.value = false;
-    console.error("Error fetching manga data:", error);
-  }
-  fetchingData.value = false;
-};
-
-const fetchMangaData = async (id, type, full) => {
-  try {
-    const response = await axios.get(
-      `https://api.jikan.moe/v4/${type}/${id}${full ? "/full" : ""}`
-    );
-    return response.data.data;
-  } catch (error) {
-    console.error("Error fetching manga data:", error);
-    throw error;
-  }
-};
-
-const createTimelines = async (relations) => {
-  creatingTimelines.value = true;
-  try {
-    const timelineData = [];
-    for (const relation of relations) {
-      for (const entry of relation.entry) {
-        await delay(500);
-        const data = await fetchMangaData(entry.mal_id, entry.type, false);
-
-        // Add from date
-        const dateField = entry.type === "manga" ? "published" : "aired";
-        if (data[dateField]?.from) {
-          entry.from = data[dateField].from;
-        }
-
-        // Add title, title_english, title_japanese
-        entry.name = data.title;
-        entry.title_english = data.title_english;
-        entry.title_japanese = data.title_japanese;
-
-        timelineData.push(relation);
-      }
-    }
-
-    return timelineData;
-  } catch (error) {
-    console.error("Error creating timelines:", error);
-  }
-  creatingTimelines.value = false;
-};
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const sortRelationsTimeline = () => {
-  if (!idb.value.mangas[$route.params.id].relations) return;
-
-  idb.value.mangas[$route.params.id].relations.sort((a, b) => {
-    const dateA = new Date(a.entry[0].from);
-    const dateB = new Date(b.entry[0].from);
-    if (App.search.sort) return dateB - dateA;
-    return dateA - dateB;
-  });
-};
+const manga = ref(null);
 
 const convertDate = (date) => {
   return date ? new Date(date).toLocaleDateString() : "";
@@ -258,41 +168,44 @@ const convertDate = (date) => {
 
 const refresh = (done) => {
   setTimeout(() => {
-    fetchData(true);
+    // fetchData(true);
     done();
   }, 500);
 };
 
-const stopWatchingCreateTimelines = watch(
-  () => creatingTimelines.value,
-  () => {
-    if (!creatingTimelines.value && idb.value.mangas[$route.params.id])
-      sortRelationsTimeline();
+let retries = 0;
+const loadData = (id) => {
+  if (retries > 19) {
+    // TODO: write give up logic
+    return;
   }
-);
 
-const stopWatchingOrder = watch(
-  () => App.search.order,
-  () => {
-    if (idb.value.mangas[$route.params.id]) sortRelationsTimeline();
+  manga.value = getById("manga", id);
+
+  if (manga.value === null) {
+    setTimeout(() => {
+      loadData(id);
+      retries++;
+    }, 100);
   }
-);
 
-const stopWatchingParams = watch(
+  if (!Array.isArray(manga.value?.relations))
+    Api.fetchRelationsById("manga", id);
+};
+
+const stopWatchingRouteChange = watch(
   () => $route.params.id,
   () => {
     tab.value = "info";
-    fetchData(true);
+    loadData($route.params.id);
   }
 );
 
-onMounted(() => {
-  fetchData(true);
+onBeforeMount(() => {
+  loadData($route.params.id);
 });
 
 onBeforeUnmount(() => {
-  stopWatchingCreateTimelines();
-  stopWatchingOrder();
-  stopWatchingParams();
+  stopWatchingRouteChange();
 });
 </script>
