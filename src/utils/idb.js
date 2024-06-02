@@ -109,3 +109,5 @@ export function getById(type, id) {
 
   return db.value[type].find((item) => item.mal_id === parseInt(id));
 }
+
+export default isFinished;
