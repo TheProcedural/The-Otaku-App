@@ -22,14 +22,12 @@ const { data: db } = useIDBKeyval("otaku-app", {
   manga: [],
 });
 
-export async function addRelations(type, id, relations) {
-  if (!db.value[type]) return;
-
-  const item = db.value[type].find((item) => item.mal_id === id);
-  item.relations = relations;
+export function addRelations(type, id, relations) {
+  db.value[type].find((item) => item.mal_id === parseInt(id)).relations =
+    relations;
 }
 
-export async function addEpisodes(id, episodes) {
+export function addEpisodes(id, episodes) {
   if (!db.value.anime) return `Anime DB not initialised`;
   if (!episodes) return "Fetched episodes not found";
 
@@ -101,6 +99,6 @@ export async function search(type, query) {
   return fuse.search(query).map((i) => i.item);
 }
 
-export async function getById(type, id) {
-  return db.value[type].find((item) => item.mal_id === id);
+export function getById(type, id) {
+  return db.value[type].find((item) => item.mal_id === parseInt(id));
 }

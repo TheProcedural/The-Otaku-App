@@ -30,26 +30,6 @@
       <Animes />
     </div>
 
-    <!-- No results -->
-    <!-- <div
-      v-if="
-        !App.search.mangaResults.length &&
-        !App.search.animeResults.length &&
-        App.search.value.trim() !== ''
-      "
-      class="tw-w-full tw-h-full tw-absolute tw-top-0 tw-bottom-0 tw-left-0 tw-right-0 tw-flex tw-justify-center tw-items-center"
-    >
-      <h1 class="tw-text-2xl tw-text-center tw-text-slate-800 tw-font-bold">
-        {{
-          !Api.fetching.anime &&
-          !Api.fetching.manga &&
-          $t("discover.no_results")
-        }}
-        {{ !Api.fetching.manga && $t("discover.no_manga_results") }}
-        {{ !Api.fetching.anime && $t("discover.no_anime_results") }}
-      </h1>
-    </div> -->
-
     <!-- Fetching results -->
     <span
       v-if="Api.fetching.anime || Api.fetching.manga"
@@ -62,7 +42,7 @@
     <template
       v-if="
         App.search.value.trim() === '' &&
-        ![...App.search.animeResults, ...App.search.mangaResults].length
+        ![...App.search.results.anime, ...App.search.results.manga].length
       "
       class="tw-w-full"
     >

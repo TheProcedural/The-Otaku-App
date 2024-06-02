@@ -78,7 +78,7 @@ export const useApi = defineStore("api", {
     },
 
     // Anime specific
-    async featchAnimeEpisodesById(id) {
+    async fetchEpisodesById(id) {
       this.fetching.episodes = true;
       this.error.episodes = null;
       try {
@@ -86,7 +86,8 @@ export const useApi = defineStore("api", {
           `${API_BASE_URL}/anime/${id}/episodes`
         );
 
-        addEpisodes(id, response.data.data);
+        const result = addEpisodes(id, response.data.data);
+        console.log(result);
       } catch (error) {
         this.error.episodes = error;
       } finally {

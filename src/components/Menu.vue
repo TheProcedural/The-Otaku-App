@@ -131,7 +131,7 @@
       </q-item-section>
     </q-item>
 
-    <q-item tag="label" v-ripple>
+    <!-- <q-item tag="label" v-ripple>
       <q-item-section>
         <q-item-label>{{ $t("sidebar.show_unrated") }}</q-item-label>
         <q-item-label caption>
@@ -141,7 +141,7 @@
       <q-item-section side>
         <q-checkbox v-model="App.search.filters.showUnrated" />
       </q-item-section>
-    </q-item>
+    </q-item> -->
 
     <!-- limit per page -->
     <q-item tag="label" v-ripple>

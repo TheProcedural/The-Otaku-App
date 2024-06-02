@@ -35,6 +35,7 @@
           :label="$t('anime.trailer_tab')"
         />
       </q-tabs>
+
       <q-tab-panels
         animated
         swipeable
@@ -46,9 +47,9 @@
           <h2 class="tw-text-lg tw-font-medium tw-text-left">
             {{
               App.getTitle(
-                idb.animes[$route.params.id]?.title_english,
-                idb.animes[$route.params.id]?.title,
-                idb.animes[$route.params.id]?.title_japanese
+                anime?.title_english,
+                anime?.title,
+                anime?.title_japanese
               )
             }}
           </h2>
@@ -60,17 +61,11 @@
                 color="orange"
                 class="tw-text-white tw-mx-auto -tw-mb-4 tw-z-10"
               >
-                {{
-                  idb.animes[$route.params.id]?.score
-                    ? idb.animes[$route.params.id]?.score + "/10"
-                    : $t("anime.unrated")
-                }}
+                {{ anime?.score ? anime?.score + "/10" : $t("anime.unrated") }}
               </q-chip>
               <q-img
-                :src="
-                  idb.animes[$route.params.id]?.images?.webp?.large_image_url
-                "
-                :alt="idb.animes[$route.params.id]?.title_english"
+                :src="anime?.images?.webp?.large_image_url"
+                :alt="anime?.title_english"
                 loading="lazy"
                 class="md:tw-w-56 sm:tw-w-48 tw-w-32 tw-rounded-lg"
               />
@@ -79,61 +74,56 @@
             <div>
               <p class="tw-mt-2">
                 <strong>{{ $t("anime.number_of_episodes") }}</strong>
-                {{ idb.animes[$route.params.id]?.number_of_episodes }}
+                {{ anime?.number_of_episodes }}
               </p>
               <p>
                 <strong>{{ $t("anime.status") }}</strong>
-                {{ idb.animes[$route.params.id]?.status }}
+                {{ anime?.status }}
               </p>
               <p>
                 <strong>{{ $t("anime.type") }}</strong>
-                {{ idb.animes[$route.params.id]?.type }}
+                {{ anime?.type }}
               </p>
               <p>
                 <strong>{{ $t("anime.source") }}</strong>
-                {{ idb.animes[$route.params.id]?.source }}
+                {{ anime?.source }}
               </p>
               <p>
                 <strong>{{ $t("anime.aired_from") }}</strong>
-                {{ convertDate(idb.animes[$route.params.id]?.aired?.from) }}
+                {{ convertDate(anime?.aired?.from) }}
               </p>
               <p>
                 <strong>{{ $t("anime.aired_to") }}</strong>
-                {{ convertDate(idb.animes[$route.params.id]?.aired?.to) }}
+                {{ convertDate(anime?.aired?.to) }}
               </p>
               <p>
                 <strong>{{ $t("anime.duration") }}</strong>
-                {{ idb.animes[$route.params.id]?.duration }}
+                {{ anime?.duration }}
               </p>
               <p>
                 <strong>{{ $t("anime.rating") }}</strong>
-                {{ idb.animes[$route.params.id]?.rating }}
+                {{ anime?.rating }}
               </p>
               <p>
                 <strong>{{ $t("anime.rank") }}</strong>
-                {{ idb.animes[$route.params.id]?.rank }}
+                {{ anime?.rank }}
               </p>
               <p>
                 <strong>{{ $t("anime.popularity") }}</strong>
-                {{ idb.animes[$route.params.id]?.popularity }}
+                {{ anime?.popularity }}
               </p>
             </div>
           </div>
           <p class="tw-text-gray-600 tw-my-4 tw-text-justify tw-indent-8">
-            {{
-              idb.animes[$route.params.id]?.synopsis?.replace(
-                "[Written by MAL Rewrite]",
-                ""
-              )
-            }}
+            {{ anime?.synopsis?.replace("[Written by MAL Rewrite]", "") }}
           </p>
         </q-tab-panel>
 
         <q-tab-panel name="episodes" class="tw-p-0">
-          <div v-if="idb.animes[$route.params.id]?.episodes?.length > 0">
+          <div v-if="anime?.episodes?.length > 0">
             <q-list>
               <q-item
-                v-for="episode in idb.animes[$route.params.id]?.episodes"
+                v-for="episode in anime?.episodes"
                 :key="episode?.mal_id"
                 tag="label"
                 v-ripple
@@ -177,7 +167,7 @@
         <q-tab-panel name="timeline">
           <q-timeline>
             <q-timeline-entry
-              v-for="relation in idb.animes[$route.params.id].relations"
+              v-for="relation in anime.relations"
               :key="relation.entry[0]?.mal_id"
               :subtitle="relation.relation"
             >
@@ -210,9 +200,7 @@
           <q-video
             class="tw-rounded-lg"
             :ratio="16 / 9"
-            :src="`https://www.youtube.com/embed/${
-              idb.animes[$route.params.id]?.trailer?.youtube_id
-            }`"
+            :src="`https://www.youtube.com/embed/${anime?.trailer?.youtube_id}`"
           />
         </q-tab-panel>
       </q-tab-panels>
@@ -225,143 +213,34 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import {
+  ref,
+  onMounted,
+  onBeforeMount,
+  onBeforeUnmount,
+  computed,
+  watch,
+} from "vue";
 import { useRouter, useRoute, RouterLink } from "vue-router";
-import { useIDBKeyval } from "@vueuse/integrations/useIDBKeyval";
 import { useI18n } from "vue-i18n";
-import { useApp } from "stores/app";
-import axios from "axios";
+import { useApp, useApi } from "stores/stores";
+import { getById } from "../utils/idb";
 
 defineOptions({
-  name: "Timeline",
+  name: "Anime",
 });
 
-const { data: idb, isFinished } = useIDBKeyval("idb", {
-  animes: [],
-  mangas: [],
-});
 const $router = useRouter();
 const $route = useRoute();
 
 const { t } = useI18n();
 const App = useApp();
+const Api = useApi();
 
 const tab = ref("info");
 const fetchingData = ref(false);
-const creatingTimelines = ref(false);
 
-const fetchData = async (refresh) => {
-  try {
-    if (!refresh && idb.value.animes[$route.params.id]) {
-      fetchingData.value = false;
-      return;
-    }
-    fetchingData.value = true;
-    const [animeAndMangaData, episodesData] = await Promise.all([
-      fetchAnimeAndMangaData($route.params.id, "anime", true),
-      fetchEpisodes($route.params.id),
-    ]);
-
-    animeAndMangaData.number_of_episodes = animeAndMangaData.episodes;
-    animeAndMangaData.episodes = prepareEpisodes(
-      episodesData,
-      idb.value.animes[$route.params.id]?.episodes || []
-    );
-
-    console.log("before: ", animeAndMangaData.relations);
-    animeAndMangaData.relations = await createTimelines(
-      animeAndMangaData.relations
-    );
-    console.log("after: ", animeAndMangaData.relations);
-    idb.value.animes[$route.params.id] = JSON.parse(
-      JSON.stringify(animeAndMangaData)
-    ); // Ensure no Proxy object is stored
-  } catch (error) {
-    fetchingData.value = false;
-    console.error("Error fetching anime data:", error);
-  }
-  fetchingData.value = false;
-};
-
-const fetchAnimeAndMangaData = async (id, type, full) => {
-  try {
-    const response = await axios.get(
-      `https://api.jikan.moe/v4/${type}/${id}${full ? "/full" : ""}`
-    );
-    return response.data.data;
-  } catch (error) {
-    console.error("Error fetching anime data:", error);
-    throw error;
-  }
-};
-
-const fetchEpisodes = async (id) => {
-  try {
-    const response = await axios.get(
-      `https://api.jikan.moe/v4/anime/${id}/episodes`
-    );
-    return response.data.data;
-  } catch (error) {
-    console.error("Error fetching anime data:", error);
-    throw error;
-  }
-};
-
-const createTimelines = async (relations) => {
-  creatingTimelines.value = true;
-  try {
-    const timelineData = [];
-    for (const relation of relations) {
-      for (const entry of relation.entry) {
-        // await App.delay(500);
-        const data = await fetchAnimeAndMangaData(
-          entry.mal_id,
-          entry.type,
-          false
-        );
-
-        // Add from date
-        const dateField = entry.type === "anime" ? "aired" : "published";
-        if (data[dateField]?.from) {
-          entry.from = data[dateField].from;
-        }
-
-        // Add title, title_english, title_japanese
-        entry.name = data.title;
-        entry.title_english = data.title_english;
-        entry.title_japanese = data.title_japanese;
-
-        timelineData.push(relation);
-      }
-    }
-    return timelineData;
-  } catch (error) {
-    console.error("Error creating timelines:", error);
-  }
-  creatingTimelines.value = false;
-};
-
-const prepareEpisodes = (episodes, existingEpisodes) => {
-  const existingEpisodesMap = Object.fromEntries(
-    existingEpisodes.map((ep) => [ep.mal_id, ep.watched])
-  );
-
-  return episodes.map((episode) => {
-    episode.watched = existingEpisodesMap[episode.mal_id] || false;
-    return episode;
-  });
-};
-
-const sortRelationsTimeline = () => {
-  if (!idb.value.animes[$route.params.id].relations) return;
-
-  idb.value.animes[$route.params.id].relations.sort((a, b) => {
-    const dateA = new Date(a.entry[0].from);
-    const dateB = new Date(b.entry[0].from);
-    if (App.search.sort) return dateB - dateA;
-    return dateA - dateB;
-  });
-};
+const anime = computed(() => getById("anime", $route.params.id));
 
 const convertDate = (date) => {
   return date ? new Date(date).toLocaleDateString() : "";
@@ -369,55 +248,14 @@ const convertDate = (date) => {
 
 const refresh = (done) => {
   setTimeout(() => {
-    fetchData(true);
+    // fetchData(true);
     done();
   }, 500);
 };
 
-const updateWatchedStatus = (mal_id, watched) => {
-  const episodes = idb.value.animes[$route.params.id]?.episodes;
-  if (episodes) {
-    const episode = episodes.find((ep) => ep.mal_id === mal_id);
-    if (episode) {
-      episode.watched = watched;
-      // Update the anime data in the database
-      idb.value.animes[$route.params.id].episodes = JSON.parse(
-        JSON.stringify(episodes)
-      ); // Ensure no Proxy object is stored
-    }
-  }
-};
+onBeforeMount(() => {
+  if (!anime.value.relations) Api.fetchRelationsById("anime", $route.params.id);
 
-const stopWatchingCreateTimelines = watch(
-  () => creatingTimelines.value,
-  () => {
-    if (!creatingTimelines.value && idb.value.animes[$route.params.id])
-      sortRelationsTimeline();
-  }
-);
-
-const stopWatchingOrder = watch(
-  () => App.search.order,
-  () => {
-    if (idb.value.animes[$route.params.id]) sortRelationsTimeline();
-  }
-);
-
-const stopWatchingParams = watch(
-  () => $route.params.id,
-  () => {
-    tab.value = "info";
-    fetchData(true);
-  }
-);
-
-onMounted(() => {
-  fetchData(true);
-});
-
-onBeforeUnmount(() => {
-  stopWatchingCreateTimelines();
-  stopWatchingOrder();
-  stopWatchingParams();
+  if (!anime.value.episodes) Api.fetchEpisodesById($route.params.id);
 });
 </script>
