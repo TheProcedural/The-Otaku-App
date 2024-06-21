@@ -22,6 +22,13 @@
       />
     </q-tabs>
 
+    <h2 class="tw-text-lg tw-font-medium tw-text-center tw-px-4 tw-mt-4">
+      {{
+        App.getTitle(anime?.title_english, anime?.title, anime?.title_japanese)
+      }}
+    </h2>
+    <q-separator class="tw-mt-4" />
+
     <transition
       appear
       enter-active-class="animated zoomIn faster"
@@ -35,24 +42,16 @@
         class="!tw-min-h-[550px]"
         v-if="triggerTransition"
       >
-        <q-tab-panel class="tw-px-0" name="info">
+        <q-tab-panel class="tw-p-0" name="info">
           <q-pull-to-refresh @refresh="refreshDetails">
-            <h2 class="tw-text-lg tw-font-medium tw-text-center tw-px-4">
-              {{
-                App.getTitle(
-                  anime?.title_english,
-                  anime?.title,
-                  anime?.title_japanese
-                )
-              }}
-            </h2>
-            <q-separator class="tw-my-4" />
-            <div class="tw-flex tw-justify-between tw-items-center">
-              <q-item-section avatar class="tw-flex tw-justify-center">
+            <div
+              class="tw-flex tw-flex-grid tw-gap-4 tw-justify-center tw-px-4 tw-mt-4"
+            >
+              <div class="tw-w-2/3">
                 <q-chip
                   size="md"
                   color="amber-10"
-                  class="tw-text-white tw-mx-auto -tw-mb-4 tw-z-10"
+                  class="tw-relative tw-text-white tw-top-4 tw-mx tw-z-10"
                 >
                   {{
                     anime?.score ? anime?.score + "/10" : $t("anime.unrated")
@@ -62,11 +61,11 @@
                   :src="anime?.images?.webp?.large_image_url"
                   :alt="anime?.title_english"
                   loading="lazy"
-                  class="md:tw-w-56 sm:tw-w-48 tw-w-32 tw-rounded-lg"
+                  class="tw-w-full tw-rounded-lg"
                 />
-              </q-item-section>
+              </div>
 
-              <div>
+              <div class="tw-w-2/3">
                 <p class="tw-mt-2">
                   <strong>{{ $t("anime.number_of_episodes") }}</strong>
                   {{ anime?.number_of_episodes }}
@@ -109,12 +108,16 @@
                 </p>
               </div>
             </div>
-            <p class="tw-text-gray-600 tw-my-4 tw-text-justify tw-indent-8">
+
+            <p
+              class="tw-text-gray-600 tw-my-4 tw-text-justify tw-indent-8 tw-px-4"
+            >
               {{ anime?.synopsis?.replace("[Written by MAL Rewrite]", "") }}
             </p>
+
             <div class="tw-relative tw-pb-[56.25%] tw-w-full">
               <q-video
-                class="tw-rounded-xl tw-absolute tw-top-0 tw-left-0 tw-w-full tw-h-full"
+                class="tw-absolute tw-top-0 tw-left-0 tw-w-full tw-h-full"
                 :src="`https://www.youtube-nocookie.com/embed/${anime?.trailer?.youtube_id}`"
                 frameborder="0"
               />
@@ -124,20 +127,10 @@
 
         <q-tab-panel
           v-if="anime?.episodes?.length > 0"
-          class="tw-px-0"
+          class="tw-p-0"
           name="episodes"
         >
           <q-pull-to-refresh @refresh="refreshEpisodes">
-            <h2 class="tw-text-lg tw-font-medium tw-text-center tw-px-4">
-              {{
-                App.getTitle(
-                  anime?.title_english,
-                  anime?.title,
-                  anime?.title_japanese
-                )
-              }}
-            </h2>
-            <q-separator class="tw-mt-4" />
             <div>
               <q-list>
                 <q-item v-ripple tag="label" dense class="tw-bg-gray-200">
@@ -209,16 +202,6 @@
 
         <q-tab-panel class="tw-px-0" name="relations">
           <q-pull-to-refresh @refresh="refreshRelations">
-            <h2 class="tw-text-lg tw-font-medium tw-text-center tw-px-4">
-              {{
-                App.getTitle(
-                  anime?.title_english,
-                  anime?.title,
-                  anime?.title_japanese
-                )
-              }}
-            </h2>
-            <q-separator class="tw-my-4" />
             <q-timeline layout="dense" class="tw-px-4">
               <q-timeline-entry
                 v-for="relation in anime.relations"
