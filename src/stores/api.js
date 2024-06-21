@@ -26,9 +26,6 @@ export const useApi = defineStore("api", {
     },
   }),
   actions: {
-    delay(ms) {
-      new Promise((resolve) => setTimeout(resolve, ms));
-    },
     async search(type, query) {
       this.fetching[type] = true;
       this.error[type] = null;
@@ -103,17 +100,17 @@ export const useApi = defineStore("api", {
 
           console.log(hasNextPage);
           console.log(page);
-          this.delay(1000);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
 
         const result = addEpisodes(id, data);
 
         // If 404 then fetchById and retry
         if (result === 404) {
-          this.delay(300);
+          await new Promise((resolve) => setTimeout(resolve, 300)); // Delays
           await this.fetchById("anime", id, true);
 
-          this.delay(400);
+          await new Promise((resolve) => setTimeout(resolve, 400)); // Delays
           await this.fetchEpisodesById(id);
           return;
         }
